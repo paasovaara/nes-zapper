@@ -38,9 +38,7 @@ public class ZapperController : MonoBehaviour {
         createTarget();
         handleState();
 
-
         m_plane.GetComponent<Renderer>().material.color = new Color(0, 0, 0);
-
 	}
 	
     void showPlane() {
@@ -64,7 +62,7 @@ public class ZapperController : MonoBehaviour {
 
     void moveTarget() {
         //TODO project the size properly
-        Vector3 newPos = new Vector3(m_targetPos.position.x, m_targetPos.position.y, m_targetPrefab.transform.position.z);
+        Vector3 newPos = new Vector3(m_targetPos.position.x, m_targetPos.position.y, m_targetPos.position.z);
         m_targetObj.transform.position = newPos;
 
     }

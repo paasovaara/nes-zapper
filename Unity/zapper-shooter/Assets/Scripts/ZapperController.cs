@@ -24,8 +24,8 @@ public class ZapperController : MonoBehaviour {
 
     private int getFrameCountForState(DisplayState state) {
         switch(state) {
-        case DisplayState.BLANK_FRAME: return 10;
-        case DisplayState.TARGET: return 10;
+        case DisplayState.BLANK_FRAME: return 2;
+        case DisplayState.TARGET: return 2;
         default: return -1;
         }
     }
@@ -75,6 +75,8 @@ public class ZapperController : MonoBehaviour {
                 moveTarget();
                 //createTarget();//Is this slow as hell? Move to constructor and only activate here
                 m_planeFrameCounter = 0;
+
+                Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
             }
             m_planeFrameCounter++;
 
@@ -84,6 +86,8 @@ public class ZapperController : MonoBehaviour {
             if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.IDLE;
                 m_planeFrameCounter = 0;
+
+                Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
             }
             m_planeFrameCounter++;
 

@@ -21,14 +21,24 @@ void loop() {
   if (triggerPressed != triggerPrev) {
     Serial.print("Trigger state changed: ");
     Serial.println(triggerPressed);
-    /*if (triggerPressed) {
-      int detectorValue = analogRead(inPinDetector);
+    if (triggerPressed == LOW) {
+      readDetector();
+      digitalWrite(outPinLed, LOW);
+      delay(15);
+      readDetector();
+      digitalWrite(outPinLed, HIGH);
+      delay(15);
+      readDetector();
+      digitalWrite(outPinLed, LOW);
+      delay(15);
+      readDetector();
       
-      Serial.print("Detector: ");
-      Serial.println(detectorValue);
-    }*/
+    }
   }
-  if (triggerPressed) {
+  digitalWrite(outPinLed, HIGH);
+  
+  /*
+  if (triggerPressed == LOW) {
     int detectorPrev = detectorValue;
     detectorValue = analogRead(inPinDetector);    
     Serial.print("     Detector: ");
@@ -36,8 +46,19 @@ void loop() {
     Serial.print("   diff=");
     Serial.println(detectorValue - detectorPrev);
   }
-  
-  int ledState = triggerPressed ? HIGH : LOW;
+  int ledState = !triggerPressed ? HIGH : LOW;
   digitalWrite(outPinLed, ledState);
+*/
+  
+}
+
+void readDetector() {
+  int detectorPrev = detectorValue;
+  detectorValue = analogRead(inPinDetector);    
+  Serial.print("     Detector: ");
+  Serial.print(detectorValue);
+  Serial.print("   diff=");
+  Serial.println(detectorValue - detectorPrev);
 
 }
+

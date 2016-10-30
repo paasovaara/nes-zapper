@@ -24,8 +24,8 @@ public class ZapperController : MonoBehaviour {
 
     private int getFrameCountForState(DisplayState state) {
         switch(state) {
-        case DisplayState.BLANK_FRAME: return 2;
-        case DisplayState.TARGET: return 2;
+        case DisplayState.BLANK_FRAME: return 1;
+        case DisplayState.TARGET: return 1;
         default: return -1;
         }
     }

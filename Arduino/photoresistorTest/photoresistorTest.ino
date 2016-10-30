@@ -2,14 +2,18 @@ const int BUFFER_SIZE = 8;
 int m_buffer[BUFFER_SIZE];
 int m_bufIndex = 0;
 
-unsigned long m_timer = 0;
-int m_counter = 0;
+const int OUTPUT_SAMPLE_TIMEOUT_MS = 17;//60Hz = 17ms
+
+unsigned long m_outputTimer = 0;
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  m_timer = millis();
+  m_outputTimer = millis();
 
+  for (int n = 0; n < BUFFER_SIZE; ++n) {
+    m_buffer[n] = 1023;//pullup mode
+  }
   // Timer0 is already used for millis() - we'll just interrupt somewhere
   // in the middle and call the "Compare A" function below
   OCR0A = 0xAF;
@@ -20,11 +24,14 @@ void setup() {
 SIGNAL(TIMER0_COMPA_vect) 
 {
   readSample();
-  //we're interested in events that happen roughly within 15-20 ms  
-  if (m_counter++ >= 4) {
+
+  unsigned long curTime = millis();
+  
+  if (curTime - m_outputTimer >= OUTPUT_SAMPLE_TIMEOUT_MS) {
+    m_outputTimer = curTime;
+    
     int val = readBuffer();
     Serial.println(val);
-    m_counter = 0;    
   }
 }
 

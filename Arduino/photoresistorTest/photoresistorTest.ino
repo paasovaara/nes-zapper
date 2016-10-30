@@ -19,11 +19,12 @@ void setup() {
 // Interrupt is called once a millisecond (Timer0 frequency)
 SIGNAL(TIMER0_COMPA_vect) 
 {
-  int val = readValue();
+  readSample();
   //we're interested in events that happen roughly within 15-20 ms  
   if (m_counter++ >= 4) {
-      Serial.println(val);
-      m_counter = 0;    
+    int val = readBuffer();
+    Serial.println(val);
+    m_counter = 0;    
   }
 }
 
@@ -36,8 +37,7 @@ int readSample() {
   return value;
 }
 
-int readValue() {
-  int value = readSample();
+int readBuffer() {
   //TODO: test if median is better than avg
   int sum = 0;
   for (int n = 0; n < BUFFER_SIZE; ++n) {

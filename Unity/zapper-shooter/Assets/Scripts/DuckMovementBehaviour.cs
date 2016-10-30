@@ -1,26 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Bounds {
-    public float width;
-    public float height;
-}
-
 public class DuckMovementBehaviour : MonoBehaviour {
-    private Bounds m_bounds;
+    [SerializeField]
+    private Transform m_bounds;
+
 
     float m_timer = 0.0f;
     float m_nextDirectionChange = 0.0f;
     const float MAX_DIRECTION_TIMER = 3.0f;
-    const float VELOCITY_PER_FRAME = 0.02f;
+    const float VELOCITY_PER_FRAME = 0.04f;
 
     Vector2 m_direction = new Vector2();
 
 	// Use this for initialization
 	void Start () {
-        m_bounds = new Bounds();
-        m_bounds.width = 10.0f;
-        m_bounds.height = 7.0f;
+        
         Vector2 vec2 = Random.insideUnitCircle;
         this.transform.position = new Vector3(vec2.x, vec2.y, this.transform.position.z);
 
@@ -38,8 +33,24 @@ public class DuckMovementBehaviour : MonoBehaviour {
     }
 	
     private void checkBounds() {
-        //TODO bounce if goes out of bounds
+        //TODO bounce if goes out of bounds, now it just clamps
+        Collider c = GetComponent<Collider>();
+        Vector3 extents = 1.05f * c.bounds.extents;
 
+        float xMin = -1*(m_bounds.localScale.x / 2.0f + m_bounds.localPosition.x) + extents.x;
+        float xMax = (m_bounds.localScale.x / 2.0f + m_bounds.localPosition.x) - extents.x;
+        float yMin = -1*(m_bounds.localScale.y / 2.0f + m_bounds.localPosition.y) + extents.y;
+        float yMax = (m_bounds.localScale.y / 2.0f + m_bounds.localPosition.y) - extents.y;
+
+        Vector3 curPos = this.transform.position;
+        Debug.Log(string.Format("Min ({0},{1}), Max ({2}, {3})", xMin, yMin, xMax, yMax));
+        Vector3 newPosition = new Vector3(
+            Mathf.Clamp (curPos.x, xMin, xMax), 
+            Mathf.Clamp (curPos.y, yMin, yMax),
+            curPos.z
+            );
+
+        this.gameObject.transform.position = newPosition;
     }
 
 	// Update is called once per frame

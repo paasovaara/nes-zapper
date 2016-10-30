@@ -1,4 +1,4 @@
-const int BUFFER_SIZE = 8;
+const int BUFFER_SIZE = 4;
 int m_buffer[BUFFER_SIZE];
 int m_bufIndex = 0;
 

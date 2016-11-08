@@ -18,7 +18,7 @@ public enum ComPort {
 /*
  * Use message handler for async callbacks, or clearQueue for a thread safe way to get all pending messages (f.ex from main loop)
  */
-interface IArduinoMessageHandler {
+public interface IArduinoMessageHandler {
     void messageReceived(ArduinoMessage msg);
 }
 
@@ -28,17 +28,21 @@ public class ArduinoListener : MonoBehaviour {
     [SerializeField]
     private ComPort m_comPort = ComPort.COM3;
 
-    [SerializeField]
-    private IArduinoMessageHandler m_messageHandler;
+    private List<IArduinoMessageHandler> m_messageHandlers = new List<IArduinoMessageHandler>();
 
     private List<ArduinoMessage> m_queue = new List<ArduinoMessage>();
 
-    public string toString(ComPort com) {
+    private string toString(ComPort com) {
         switch (com) {
         case ComPort.COM3: return "COM3";
         case ComPort.COM4: return "COM4";
         }
         return "unknown";
+    }
+
+    public void addMessageHandler(IArduinoMessageHandler handler) {
+        //TODO add possibility to remove a handler
+        m_messageHandlers.Add(handler);
     }
 
 	// Use this for initialization
@@ -83,9 +87,15 @@ public class ArduinoListener : MonoBehaviour {
 
     }
 
-    public List<ArduinoMessage> clearQueue() {
-        List<ArduinoMessage> msgs = m_queue;
+    public List<ArduinoMessage> getAndClearQueue() {
+        List<ArduinoMessage> msgs = getQueue();
         m_queue.Clear();
+        return msgs;
+    }
+
+    public List<ArduinoMessage> getQueue() {
+        //create deep copy of list. maybe we could also copy the events?
+        List<ArduinoMessage> msgs = new List<ArduinoMessage>(m_queue);
         return msgs;
     }
 
@@ -93,8 +103,9 @@ public class ArduinoListener : MonoBehaviour {
         Debug.Log("Read message: " + readLine);
         ArduinoMessage msg = new ArduinoMessage(readLine);
         m_queue.Add(msg);
-        if (m_messageHandler != null) {
-            m_messageHandler.messageReceived(msg);
+        foreach(IArduinoMessageHandler handler in m_messageHandlers) {
+            if (handler != null)
+                handler.messageReceived(msg);
         }
     }
 }

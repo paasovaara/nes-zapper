@@ -31,6 +31,7 @@ public class ArduinoListener : MonoBehaviour {
     private List<IArduinoMessageHandler> m_messageHandlers = new List<IArduinoMessageHandler>();
 
     private List<ArduinoMessage> m_queue = new List<ArduinoMessage>();
+    private Mutex m_mutex = new Mutex();
 
     private string toString(ComPort com) {
         switch (com) {
@@ -64,6 +65,15 @@ public class ArduinoListener : MonoBehaviour {
 
 	}
 
+    /*
+    public void Update() {
+        //debug: clear the queue always on main thread. should never deadlock or cause anything else either
+        List<ArduinoMessage> msgs = getAndClearQueue();
+        foreach(ArduinoMessage msg in msgs) {
+            Debug.Log("MESSAGE: " + msg.Message);
+        }
+    }*/
+
     public void OnDestroy() {
         //clean all resources
         Debug.Log("closing serial port");
@@ -89,20 +99,29 @@ public class ArduinoListener : MonoBehaviour {
 
     public List<ArduinoMessage> getAndClearQueue() {
         List<ArduinoMessage> msgs = getQueue();
+        m_mutex.WaitOne();
         m_queue.Clear();
+        m_mutex.ReleaseMutex();
+
         return msgs;
     }
 
     public List<ArduinoMessage> getQueue() {
-        //create deep copy of list. maybe we could also copy the events?
+        //create deep copy of list. maybe we should also copy the events?
+        m_mutex.WaitOne();
         List<ArduinoMessage> msgs = new List<ArduinoMessage>(m_queue);
+        m_mutex.ReleaseMutex();
+
         return msgs;
     }
 
     private void handleMessage(string readLine) {
-        Debug.Log("Read message: " + readLine);
+        //Debug.Log("Read message: " + readLine);
         ArduinoMessage msg = new ArduinoMessage(readLine);
+        m_mutex.WaitOne();
         m_queue.Add(msg);
+        m_mutex.ReleaseMutex();
+
         foreach(IArduinoMessageHandler handler in m_messageHandlers) {
             if (handler != null)
                 handler.messageReceived(msg);

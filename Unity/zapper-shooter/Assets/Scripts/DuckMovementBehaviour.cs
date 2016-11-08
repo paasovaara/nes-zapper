@@ -43,7 +43,7 @@ public class DuckMovementBehaviour : MonoBehaviour {
         float yMax = (m_bounds.localScale.y / 2.0f + m_bounds.localPosition.y) - extents.y;
 
         Vector3 curPos = this.transform.position;
-        Debug.Log(string.Format("Min ({0},{1}), Max ({2}, {3})", xMin, yMin, xMax, yMax));
+        //Debug.Log(string.Format("Min ({0},{1}), Max ({2}, {3})", xMin, yMin, xMax, yMax));
         Vector3 newPosition = new Vector3(
             Mathf.Clamp (curPos.x, xMin, xMax), 
             Mathf.Clamp (curPos.y, yMin, yMax),

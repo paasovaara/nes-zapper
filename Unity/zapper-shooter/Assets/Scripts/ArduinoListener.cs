@@ -40,7 +40,6 @@ public class ArduinoListener : MonoBehaviour {
 
             Thread t = new Thread(new ThreadStart(serialLoop));
             t.Start();
-            //TODO stop thread and close serial port while closing the app
         }
         else {
             Debug.LogError("Failed to open serial port " + comPort);
@@ -50,30 +49,22 @@ public class ArduinoListener : MonoBehaviour {
 
     public void OnDestroy() {
         //clean all resources
-        m_serial.Close();//Will this exit the thread loop also? wait for the thread..?
+        Debug.Log("closing serial port");
+        //Closing the port will cause exception and terminate the read thread.
+        m_serial.Close();
     }
 	
-	// Update is called once per frame
-	void Update () {
-        /*if (m_serial.IsOpen) {
-            Debug.Log("Reading serial port");
-            string input = m_serial.ReadLine();//by default this blocks, so put this to separate thread, not to main loop
-        }*/
-
-	}
-
     public void serialLoop() {
-        Debug.Log("Starting serial loop");
-
-        while (m_serial.IsOpen) {
-            Debug.Log("Reading new message");
-            //readline blocks until EOL
-            string input = m_serial.ReadLine();
-            handleMessage(input);
-
-
-            //TODO exit loop if closed. might require enabling timeouts
-
+        try {
+            Debug.Log("Starting serial loop");
+            while (m_serial.IsOpen) {
+                //readline blocks until EOL or until IOException
+                string input = m_serial.ReadLine();
+                handleMessage(input);
+            }
+        }
+        catch(System.Exception ex) {
+            Debug.Log("Serial thread aborted: " + ex.StackTrace);        
         }
         Debug.Log("Stopping serial loop");
 

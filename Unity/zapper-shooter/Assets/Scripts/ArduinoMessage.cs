@@ -17,4 +17,8 @@ public class ArduinoMessage
     {
         m_msg = msg;
     }
+
+    public override string ToString() {
+        return Message;
+    }
 }

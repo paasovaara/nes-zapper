@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
-public class ZapperController : MonoBehaviour {
+public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
     [SerializeField]
     GameObject m_plane;
 
@@ -14,6 +15,8 @@ public class ZapperController : MonoBehaviour {
     private GameObject m_targetObj;
 
     private int m_planeFrameCounter = 0;
+
+    private ArduinoListener m_arduino;
 
     enum DisplayState {
         IDLE,
@@ -35,6 +38,9 @@ public class ZapperController : MonoBehaviour {
 	void Start () {
 
         m_state = DisplayState.IDLE;
+        m_arduino = GetComponent<ArduinoListener>();
+        m_arduino.addMessageHandler(this);
+
         createTarget();
         handleState();
 
@@ -107,6 +113,17 @@ public class ZapperController : MonoBehaviour {
 
 	void Update () {
         bool pressed = Input.GetButtonDown("trigger");
+
+        List<ArduinoMessage> msgs = m_arduino.getAndClearQueue();
+        if (msgs != null) {
+            foreach(ArduinoMessage msg in msgs) {
+                //TODO define the interface better
+                if (msg.Message.Contains("TRIGGER")) {
+                    pressed = true;
+                }
+            }
+        }
+
         if (pressed)
         {
             Debug.LogFormat ("Trigger pressed");
@@ -114,5 +131,9 @@ public class ZapperController : MonoBehaviour {
         }
 
         handleState();
+    }
+
+    public void messageReceived(ArduinoMessage msg) {
+        Debug.Log("[Zapper]: " + msg);
     }
 }

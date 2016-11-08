@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO.Ports;
 using System.Threading;
+using System.Collections.Generic;
 
 /**
  * For System.IO.Ports namespace you need to enable .Net 2.0 instead of .Net 2.0 subset (which is default).
@@ -14,11 +15,23 @@ public enum ComPort {
     COM4
 }
 
+/*
+ * Use message handler for async callbacks, or clearQueue for a thread safe way to get all pending messages (f.ex from main loop)
+ */
+interface IArduinoMessageHandler {
+    void messageReceived(ArduinoMessage msg);
+}
+
 public class ArduinoListener : MonoBehaviour {
     SerialPort m_serial = null;
 
     [SerializeField]
-    private ComPort m_comPort;
+    private ComPort m_comPort = ComPort.COM3;
+
+    [SerializeField]
+    private IArduinoMessageHandler m_messageHandler;
+
+    private List<ArduinoMessage> m_queue = new List<ArduinoMessage>();
 
     public string toString(ComPort com) {
         switch (com) {
@@ -70,7 +83,18 @@ public class ArduinoListener : MonoBehaviour {
 
     }
 
-    private void handleMessage(string msg) {
-        Debug.Log("Read message: " + msg);
+    public List<ArduinoMessage> clearQueue() {
+        List<ArduinoMessage> msgs = m_queue;
+        m_queue.Clear();
+        return msgs;
+    }
+
+    private void handleMessage(string readLine) {
+        Debug.Log("Read message: " + readLine);
+        ArduinoMessage msg = new ArduinoMessage(readLine);
+        m_queue.Add(msg);
+        if (m_messageHandler != null) {
+            m_messageHandler.messageReceived(msg);
+        }
     }
 }

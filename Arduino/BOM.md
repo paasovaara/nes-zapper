@@ -7,7 +7,7 @@ Amount  | Type
 1pc     | Arduino Uno
 1pc     | NES Zapper, or equalent.
 1pc     | Breadboard
-1pc     | 5kohm resistor
+2pc     | 10kohm resistor
 1pc     | Photoresistor
 several | Jumper wires
 

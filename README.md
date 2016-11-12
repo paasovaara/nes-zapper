@@ -28,9 +28,9 @@ Folder /Unity contains the corresponding Unity3d project. Further instructions a
 
 ## License & Trademarks
 
-NES, NES Zapper and Duck Hunt are trademarks of (Nintendo)[http://www.nintendo.com/] corporation. 
+NES, NES Zapper and Duck Hunt are trademarks of [Nintendo](http://www.nintendo.com/) corporation. 
 
-All of the source code found in this project are licensed under the (MIT license)[LICENSE]. 
+All of the source code found in this project are licensed under the [MIT license](LICENSE). 
 
 License does NOT include any of the artwork found in the project folders, which are screenshots of the original Duck Hunt game, owned by Nintendo. The screenshots are used here as non-essential part of this research project and are treated as fair use under the Section 107 of the Copyright Act. The author and contributors of this project decline all responsibility for copyright infringements of possible derivate work or additional distribution of this project.
 

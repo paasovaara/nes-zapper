@@ -8,7 +8,7 @@ This implementation targets to output 60Hz displays. Some of the hardcoded filte
 
 See images in /HW folder for system diagrams and teardown pictures. The trigger circuit is identical to the original Zapper but the detector circuit is WAY simplified, using just voltage division. We do the whole detection logic in SW based on the analog input. Original Zapper contained already some detection logic.
 
-See (Bom)[BOM.md] for required components.
+See [BOM](BOM.md) for required components.
 
 ## Output
 
@@ -20,8 +20,9 @@ Output frequency should be static (f.ex 60Hz or 120Hz). Design considerations: u
 
 All messages are separated by an LF-char.
 
+
 Message | Description
----------------------
+--------| ------------
 TRIG    | Trigger pulled, burst of values to follow
 [0-1023]| Raw analog value read, 0 meaning pitch black and 1023 saturated white.
 END     | End of single burst. 

@@ -27,7 +27,7 @@ const int DETECTOR_THRESHOLD_BLANK = 10; // This needs testing. Optimally we wou
 const int DETECTOR_THRESHOLD_TARGET = -5; // This needs testing. Optimally we would have an input "knob" where we could adjust it in runtime
 int m_prevDetector = 0;
 
-const int TRIGGER_STATE_LENGTH_MS = 200;  // Burst length. TODO reduce to reasonable, test how fast user can pull
+const int TRIGGER_STATE_LENGTH_MS = 250;  // Burst length. TODO reduce to reasonable, test how fast user can pull
 unsigned long m_triggeredTimer = 0;
 
 /** Implementation begins */
@@ -68,20 +68,21 @@ void loop() {
 /** Trigger pressed, we need to start monitoring the state(s) and sending output */
 void triggerCallback() {
   if (m_state == Triggered) {
-    Serial.println("Alredy Triggered..");
+    //Serial.println("Alredy Triggered..");
     return;
   }
   m_state = Triggered;
   m_hitState = StartDetecting;
   m_triggeredTimer =  millis();
   m_prevDetector = readBuffer();
-  Serial.println("TRIGGER");
+  Serial.println("TRIG");
 }
 
 void updateState() {
   if (m_state == Triggered) {    
     if (millis() - m_triggeredTimer > TRIGGER_STATE_LENGTH_MS) {
       m_state = Idle;
+      Serial.println("END");
     }
   }
   else {
@@ -105,31 +106,29 @@ void detectHit() {
     if (diffToPrev >= DETECTOR_THRESHOLD_BLANK) {
       m_hitState = BlankDetected;
       stateChanged = true;
-      Serial.print("TO BLANK DETECTED STATE, diff:");
-      Serial.println(diffToPrev);
+      //Serial.print("TO BLANK DETECTED STATE, diff:");
+      //Serial.println(diffToPrev);
     }
   }
   else if (m_hitState == BlankDetected) {
     //looking for white target => spike downwards
     if (diffToPrev <= DETECTOR_THRESHOLD_TARGET) {
       m_hitState = Hit;
-      Serial.print("=> HIT! diff:");
-      Serial.println(diffToPrev);
+      //Serial.print("=> HIT! diff:");
+      //Serial.println(diffToPrev);
     }
     else {
       m_hitState = Miss;
-      Serial.print("<= MISS... diff:");
-      Serial.println(diffToPrev);
+      //Serial.print("<= MISS... diff:");
+      //Serial.println(diffToPrev);
     }
     stateChanged = true;
   }
-  
+  /*
   if (!stateChanged) {
     Serial.print("no change, diff:");
     Serial.println(diffToPrev);
-  }
-
-  
+  }*/
   
   m_prevDetector = detector;
 }
@@ -144,10 +143,12 @@ void sendOutput()  {
       m_outputTimer = curTime;
       
       int val = readBuffer();
-      Serial.println(val);
+      //Normalize here to send 0 on black and 1023 on white. 
+      int output = 1023 - val;
+      Serial.println(output);
       //we might have to start the counter for detectHit() from the actual trigger..
       //other option is not to be so super strict but allow some lag for the detection. might be more robust 
-      detectHit();
+      //detectHit();
     }  
   }
 }

@@ -6,7 +6,7 @@ int m_bufIndex = 0;
 const int PIN_TRIGGER_INPUT = 2; // interrupt 0 is associated with pin 2
 
 /** Output */
-const int OUTPUT_SAMPLE_PERIOD_MS = 17;  // 60Hz = 17ms
+const int OUTPUT_SAMPLE_PERIOD_MS = 8;  // 60Hz = 17ms, 120Hz = ~8ms
 unsigned long m_outputTimer = 0;
 
 const bool SEND_ALWAYS = false; //debug flag
@@ -33,7 +33,7 @@ unsigned long m_triggeredTimer = 0;
 /** Implementation begins */
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   m_outputTimer = millis();
   m_triggeredTimer =  millis();
   

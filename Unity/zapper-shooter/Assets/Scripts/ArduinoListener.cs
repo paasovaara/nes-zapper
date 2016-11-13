@@ -49,7 +49,7 @@ public class ArduinoListener : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         string comPort = toString(m_comPort);
-        m_serial = new SerialPort(comPort, 9600);
+        m_serial = new SerialPort(comPort, 115200);
 
         //m_serial.NewLine //set new line char
         m_serial.Open();

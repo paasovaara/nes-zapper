@@ -21,7 +21,8 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
     enum DisplayState {
         IDLE,
         BLANK_FRAME,
-        TARGET
+        TARGET,
+        WAIT_FOR_RESULTS
     }
     private DisplayState m_state;
 
@@ -29,6 +30,7 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
         switch(state) {
         case DisplayState.BLANK_FRAME: return 1;
         case DisplayState.TARGET: return 1;
+        case DisplayState.WAIT_FOR_RESULTS: return 5;
         default: return -1;
         }
     }
@@ -90,6 +92,17 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
         else if (m_state == DisplayState.TARGET) {
             //TODO refactor to separate function
             if (m_planeFrameCounter > getFrameCountForState(m_state)) {
+                m_state = DisplayState.WAIT_FOR_RESULTS;
+                m_planeFrameCounter = 0;
+
+                Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
+            }
+            m_planeFrameCounter++;
+
+        }
+        else if (m_state == DisplayState.WAIT_FOR_RESULTS) {
+            //TODO refactor to separate function
+            if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.IDLE;
                 m_planeFrameCounter = 0;
 
@@ -106,9 +119,9 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
             m_planeFrameCounter = 0;
         }
 
-        m_plane.SetActive(m_state != DisplayState.IDLE);
+        m_plane.SetActive(m_state == DisplayState.BLANK_FRAME || m_state == DisplayState.TARGET);
         m_targetObj.SetActive(m_state == DisplayState.TARGET);
-        m_targetPos.gameObject.SetActive(m_state == DisplayState.IDLE);//TODO set only visibility? This also disables movement
+        m_targetPos.gameObject.SetActive(m_state == DisplayState.IDLE || m_state == DisplayState.WAIT_FOR_RESULTS);//TODO set only visibility? This also disables movement
     }
 
 	void Update () {
@@ -118,7 +131,7 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
         if (msgs != null) {
             foreach(ArduinoMessage msg in msgs) {
                 //TODO define the interface better
-                if (msg.Message.Contains("TRIGGER")) {
+                if (msg.Message.Contains("TRIG")) {
                     pressed = true;
                 }
             }
@@ -134,6 +147,7 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
     }
 
     public void messageReceived(ArduinoMessage msg) {
-        Debug.Log("[Zapper]: " + msg);
+        if (m_state != DisplayState.IDLE)
+            Debug.Log(string.Format("[Zapper at {0}]: {1}", m_state, msg));
     }
 }

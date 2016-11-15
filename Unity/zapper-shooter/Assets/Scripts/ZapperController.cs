@@ -138,7 +138,9 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
                     m_latestBurst.Clear();
                 }
                 else if (msg.Message.Contains("END")) {
-                    printMessages(m_latestBurst);
+                    string messages = printMessages(m_latestBurst);
+                    string diff = printDiff(m_latestBurst);
+                    writeToFile(messages + "\n" + diff);
                 }
                 else {
                     m_latestBurst.Add(msg);
@@ -148,25 +150,57 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
 
         if (pressed)
         {
-            Debug.LogFormat ("Trigger pressed");
+            Debug.Log ("Trigger pressed");
             showPlane();
         }
 
         handleState();
     }
 
-    private void printMessages(List<ArduinoMessage> msgs) {
+    private string printMessages(List<ArduinoMessage> msgs) {
         StringBuilder builder = new StringBuilder();
-        builder.Append("Buffer: [");
+        builder.Append("Buffer:\t[");
         foreach(ArduinoMessage msg in msgs) {
-            builder.AppendFormat("{0},", msg);
+            builder.AppendFormat("{0},\t", msg);
         }
         builder.Append("]");
-        Debug.Log(builder.ToString());
+        return builder.ToString();
+
     }
 
+    private string printDiff(List<ArduinoMessage> msgs) {
+        StringBuilder builder = new StringBuilder();
+        builder.Append("Diff:\t[");
+        int prev = -1;
+        int val = -1;
+
+        foreach(ArduinoMessage msg in msgs) {
+            if (int.TryParse(msg.Message, out val)) {
+                if (prev < 0) {
+                    builder.AppendFormat("{0},\t", val);
+                }
+                else {
+                    builder.AppendFormat("{0},\t", val - prev);
+                }
+                prev = val;
+            }
+
+        }
+        builder.Append("]");
+        return builder.ToString();
+    }
+
+
     public void messageReceived(ArduinoMessage msg) {
-        if (m_state != DisplayState.IDLE)
-            Debug.Log(string.Format("[Zapper at {0}]: {1}", m_state, msg));
+        //if (m_state != DisplayState.IDLE)
+        //    Debug.Log(string.Format("[Zapper at {0}]: {1}", m_state, msg));
+    }
+
+    private void writeToFile(string msg) {
+        using (System.IO.StreamWriter file = 
+            new System.IO.StreamWriter(@"./zapper.txt", true))
+        {
+            file.WriteLine(msg);
+        }
     }
 }

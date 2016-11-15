@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
     [SerializeField]
@@ -17,6 +18,7 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
     private int m_planeFrameCounter = 0;
 
     private ArduinoListener m_arduino;
+    private List<ArduinoMessage> m_latestBurst = new List<ArduinoMessage>();
 
     enum DisplayState {
         IDLE,
@@ -133,6 +135,13 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
                 //TODO define the interface better
                 if (msg.Message.Contains("TRIG")) {
                     pressed = true;
+                    m_latestBurst.Clear();
+                }
+                else if (msg.Message.Contains("END")) {
+                    printMessages(m_latestBurst);
+                }
+                else {
+                    m_latestBurst.Add(msg);
                 }
             }
         }
@@ -144,6 +153,16 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
         }
 
         handleState();
+    }
+
+    private void printMessages(List<ArduinoMessage> msgs) {
+        StringBuilder builder = new StringBuilder();
+        builder.Append("Buffer: [");
+        foreach(ArduinoMessage msg in msgs) {
+            builder.AppendFormat("{0},", msg);
+        }
+        builder.Append("]");
+        Debug.Log(builder.ToString());
     }
 
     public void messageReceived(ArduinoMessage msg) {

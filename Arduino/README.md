@@ -12,7 +12,7 @@ See [BOM](BOM.md) for required components.
 
 ## Output
 
-Program outputs a burst of serial messages (9600baud) when the trigger is pulled. 
+Program outputs a burst of serial messages when the trigger is pulled. 
 
 Current implementation sends the raw data for some time period (f.ex 250ms). This way the receiving end can handle the detection logic based on the game update loop frequency and display lags. Once the specific parameters are found, it makes sense to move the logic to Arduino.
 

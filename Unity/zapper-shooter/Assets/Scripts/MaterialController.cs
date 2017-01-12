@@ -9,6 +9,12 @@ public class MaterialController : MonoBehaviour {
     [SerializeField]
     private Material _OnPress;
 
+    public enum MaterialState {
+        NORMAL,
+        BLANK,
+        TARGET
+    }
+
 
     // Use this for initialization
     void Start () {
@@ -20,6 +26,17 @@ public class MaterialController : MonoBehaviour {
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
         foreach(Renderer r in renderers) {
             r.material = m;
+        }
+    }
+
+    public void setState(MaterialState state) {
+        if (state == MaterialState.NORMAL) {
+            setMaterial(_Idle);
+        }
+        else {
+            setMaterial(_OnPress);
+            Color c = (state == MaterialState.BLANK) ? Color.black : Color.white;
+            _OnPress.SetColor("_MyColor", c);
         }
     }
 

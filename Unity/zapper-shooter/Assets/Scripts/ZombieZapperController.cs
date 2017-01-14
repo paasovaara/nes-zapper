@@ -14,6 +14,11 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     private List<ArduinoMessage> m_latestBurst = new List<ArduinoMessage>();
 
     [SerializeField]
+    Camera m_mainCamera;
+    [SerializeField]
+    Camera m_zapperCamera;
+
+    [SerializeField]
     GameObject m_targetPrefab;
 
     private GameObject m_target;
@@ -42,9 +47,16 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         m_arduino = GetComponent<ArduinoListener>();
         m_arduino.addMessageHandler(this);
 
+        swapCamera(true);
+
         createTarget();
 
         handleState();
+    }
+
+    void swapCamera(bool useMain) {
+        m_mainCamera.gameObject.SetActive(useMain);
+        m_zapperCamera.gameObject.SetActive(!useMain);
     }
 
     void createTarget() {
@@ -72,6 +84,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                 m_planeFrameCounter = 0;
 
                 m_target.GetComponent<MaterialController>().setState(MaterialController.MaterialState.NORMAL);
+                swapCamera(true);
 
                 Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
             }
@@ -101,6 +114,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             m_state = DisplayState.BLANK_FRAME;
 
             m_target.GetComponent<MaterialController>().setState(MaterialController.MaterialState.BLANK);
+            swapCamera(false);
         }
         else {
             Debug.LogError("Wow, this guy is trigger happy!");

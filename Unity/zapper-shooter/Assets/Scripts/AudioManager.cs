@@ -14,7 +14,7 @@ public class AudioManager : MonoBehaviour
 
     static AudioManager() {
         m_FxClips = new List<string>();
-        m_FxClips.Add("Audio/FX/118336__dag451__monster-growl");
+        //m_FxClips.Add("Audio/FX/118336__dag451__monster-growl");
         m_FxClips.Add("Audio/FX/61570__intimidated__what");
         m_FxClips.Add("Audio/FX/31255__erh__door-1");
         m_FxClips.Add("Audio/FX/125919__klankbeeld__horror-what-are-you-doing-here-cathedral");
@@ -30,7 +30,8 @@ public class AudioManager : MonoBehaviour
 
 	public enum AppAudioClip
 	{
-		RandomFx
+		RandomFx,
+        DieZombie
 	}
 
     private bool _muted = false;
@@ -49,7 +50,8 @@ public class AudioManager : MonoBehaviour
 
 		switch (clip) {
             case AppAudioClip.RandomFx:        return nextFxClip();
-		}
+            case AppAudioClip.DieZombie:       return "Audio/FX/118336__dag451__monster-growl";
+        }
 		return path;
     }
 

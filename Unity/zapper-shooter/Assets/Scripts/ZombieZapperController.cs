@@ -19,10 +19,9 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     Camera m_zapperCamera;
 
     [SerializeField]
-    GameObject m_targetPrefab;
-
-    private GameObject m_target;
-
+    private EnemySpawner m_spawner;
+    
+    
     enum DisplayState {
         IDLE,
         BLANK_FRAME,
@@ -30,6 +29,13 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         WAIT_FOR_RESULTS
     }
     private DisplayState m_state;
+
+    private enum SignalProcState {
+        INIT,
+        NOTHING_FOUND,
+        BLANK_FOUND,
+        HIT_FOUND
+    }
 
     private int getFrameCountForState(DisplayState state) {
         switch (state) {
@@ -48,9 +54,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         m_arduino.addMessageHandler(this);
 
         swapCamera(true);
-
-        createTarget();
-
+        
         handleState();
     }
 
@@ -59,8 +63,10 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         m_zapperCamera.gameObject.SetActive(!useMain);
     }
 
-    void createTarget() {
-        m_target = Instantiate(m_targetPrefab) as GameObject;
+    void swapMaterials(MaterialController.MaterialState newState) {
+        foreach (GameObject o in m_spawner.getZombies()) {
+            o.GetComponent<MaterialController>().setState(newState);
+        }
     }
 
     void handleState() {
@@ -70,8 +76,8 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                 m_state = DisplayState.TARGET;
                 m_planeFrameCounter = 0;
 
-                m_target.GetComponent<MaterialController>().setState(MaterialController.MaterialState.TARGET);
-
+                swapMaterials(MaterialController.MaterialState.TARGET);
+                
                 Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
             }
             m_planeFrameCounter++;
@@ -83,7 +89,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                 m_state = DisplayState.WAIT_FOR_RESULTS;
                 m_planeFrameCounter = 0;
 
-                m_target.GetComponent<MaterialController>().setState(MaterialController.MaterialState.NORMAL);
+                swapMaterials(MaterialController.MaterialState.NORMAL);
                 swapCamera(true);
 
                 Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
@@ -113,7 +119,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             m_planeFrameCounter = 0;
             m_state = DisplayState.BLANK_FRAME;
 
-            m_target.GetComponent<MaterialController>().setState(MaterialController.MaterialState.BLANK);
+            swapMaterials(MaterialController.MaterialState.BLANK);
             swapCamera(false);
         }
         else {
@@ -139,6 +145,9 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                 }
                 else {
                     m_latestBurst.Add(msg);
+                    if (determineHit(m_latestBurst)) {
+                        killTarget();
+                    }
                 }
             }
         }
@@ -149,6 +158,27 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         }
 
         handleState();
+    }
+
+    private void killTarget() {
+        Debug.Log("Dead zombie is the best zombie!");
+        //AudioManager.
+        //TODO somehow figure out which zombie got hit!?
+        List<GameObject> zombies = m_spawner.getZombies();
+        
+        m_spawner.KillZombie(zombies[0]);//DEBUG CODE
+    }
+
+    private bool determineHit(List<ArduinoMessage> msgs) {
+        if (msgs.Count == 0)
+            return false;
+        SignalProcState state = SignalProcState.INIT;
+        int startValue = 0;
+        foreach (ArduinoMessage msg in msgs) {
+
+        }
+        
+        return state == SignalProcState.HIT_FOUND;
     }
 
     private string printMessages(List<ArduinoMessage> msgs) {

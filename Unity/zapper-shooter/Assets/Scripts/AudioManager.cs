@@ -35,7 +35,9 @@ public class AudioManager : Singleton<AudioManager>
 	{
 		RandomFx,
         ZombieSpawned,
-        DieZombie
+        DieZombie,
+        PistolShot,
+        PistolReload
 	}
 
     private bool _muted = false;
@@ -56,6 +58,8 @@ public class AudioManager : Singleton<AudioManager>
             case AppAudioClip.RandomFx:         return nextFxClip();
             case AppAudioClip.ZombieSpawned:    return nextSpawnClip();
             case AppAudioClip.DieZombie:        return "Audio/FX/333832__nick121087__demonic-woman-scream";
+            case AppAudioClip.PistolReload:     return "Audio/FX/276962__gfl7__mp7-reload-sound";
+            case AppAudioClip.PistolShot:       return "Audio/FX/37236__shades__gun-pistol-one-shot";
         }
 		return path;
     }

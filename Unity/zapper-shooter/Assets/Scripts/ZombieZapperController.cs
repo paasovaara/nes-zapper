@@ -32,7 +32,8 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         IDLE,
         BLANK_FRAME,
         TARGET,
-        WAIT_FOR_RESULTS
+        WAIT_FOR_RESULTS,
+        RELOAD
     }
     private DisplayState m_state;
 
@@ -48,6 +49,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             case DisplayState.BLANK_FRAME: return 1;
             case DisplayState.TARGET: return 1;
             case DisplayState.WAIT_FOR_RESULTS: return 5;
+            case DisplayState.RELOAD: return 120;
             default: return -1;
         }
     }
@@ -77,55 +79,47 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
     void handleState() {
         if (m_state == DisplayState.BLANK_FRAME) {
-            //TODO refactor to separate function
             if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.TARGET;
                 m_planeFrameCounter = 0;
 
                 swapMaterials(MaterialController.MaterialState.TARGET);
-                
-                Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
             }
-            m_planeFrameCounter++;
-
         }
         else if (m_state == DisplayState.TARGET) {
-            //TODO refactor to separate function
             if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.WAIT_FOR_RESULTS;
                 m_planeFrameCounter = 0;
 
                 swapMaterials(MaterialController.MaterialState.NORMAL);
-                swapCamera(true);
-
-                Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
+                swapCamera(true);            
             }
-            m_planeFrameCounter++;
-
         }
         else if (m_state == DisplayState.WAIT_FOR_RESULTS) {
-            //TODO refactor to separate function
-            bool hit = determineHit(m_latestBurst);
+            bool hit = determineHitFromZapperData(m_latestBurst);
             if (hit) {
-                m_state = DisplayState.IDLE;
-                m_planeFrameCounter = 0;
-
                 killTarget();
             }
-            else if (m_planeFrameCounter > getFrameCountForState(m_state)) {
+            if (hit || m_planeFrameCounter > getFrameCountForState(m_state)) {
+                m_state = DisplayState.RELOAD;
+                m_planeFrameCounter = 0;
+                AudioManager.Instance.playClip(AudioManager.AppAudioClip.PistolReload);
+            }
+        }
+        else if (m_state == DisplayState.RELOAD) {
+            if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.IDLE;
                 m_planeFrameCounter = 0;
-
-                Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
             }
-            m_planeFrameCounter++;
-
-            
         }
         else if (m_state == DisplayState.IDLE) {
             m_planeFrameCounter = 0;
         }
 
+        if (m_state != DisplayState.IDLE) {
+            m_planeFrameCounter++;
+            //Debug.LogFormat("Last frame time {0} ms", Time.deltaTime * 1000);
+        }
     }
 
     void startZapperLogic() {
@@ -135,6 +129,8 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
             swapMaterials(MaterialController.MaterialState.BLANK);
             swapCamera(false);
+
+            AudioManager.Instance.playClip(AudioManager.AppAudioClip.PistolShot);
         }
         else {
             Debug.LogError("Wow, this guy is trigger happy!");
@@ -204,14 +200,14 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             hit = true;
         }
         else {
-            Debug.Log("Raycast Did not hit zombie");
+            Debug.Log("Raycast Did not hit any zombies");
         }
 
         return hit;
     }
 
 
-    private bool determineHit(List<ArduinoMessage> msgs) {
+    private bool determineHitFromZapperData(List<ArduinoMessage> msgs) {
         if (DEBUG_KILLING)
             return true;
 

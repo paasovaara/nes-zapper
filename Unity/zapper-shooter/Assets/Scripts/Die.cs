@@ -9,8 +9,9 @@ public class Die : MonoBehaviour {
 
 	public void killMe() {
         GameObject zombie = Instantiate(m_diePrefab) as GameObject;
-        //add death growl and some other sounds when parts collide to the floor
-        
+        //add other sounds when parts collide to the floor
+        AudioManager.Instance.playClip(AudioManager.AppAudioClip.DieZombie);
+
         foreach (Transform partTransform in zombie.transform) {
             GameObject zombiePart = partTransform.gameObject;
             Rigidbody rb = zombiePart.GetComponent<Rigidbody>();

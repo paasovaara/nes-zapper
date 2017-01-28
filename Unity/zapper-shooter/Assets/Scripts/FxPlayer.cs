@@ -2,13 +2,11 @@
 using System.Collections;
 
 public class FxPlayer : MonoBehaviour {
-    [SerializeField]
-    private AudioManager m_audioManager;
-
+    
     private bool m_playItAgain = false;
     
     void Start() {
-        StartCoroutine(playAndWait(5f, 5f));
+        StartCoroutine(playAndWait(5f, 15f));
     }
 
     // Update is called once per frame
@@ -21,7 +19,7 @@ public class FxPlayer : MonoBehaviour {
     private IEnumerator playAndWait(float preDelay, float waitDelay) {
         m_playItAgain = false;
         yield return new WaitForSeconds(preDelay);
-        m_audioManager.playClip(AudioManager.AppAudioClip.RandomFx);
+        AudioManager.Instance.playClip(AudioManager.AppAudioClip.RandomFx);
         yield return new WaitForSeconds(waitDelay);
         m_playItAgain = true;
     }

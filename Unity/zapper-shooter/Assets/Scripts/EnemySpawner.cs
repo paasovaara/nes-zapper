@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -60,7 +60,8 @@ public class EnemySpawner : MonoBehaviour {
                 GameObject zombie = Instantiate(m_targetPrefab) as GameObject;
                 zombie.transform.position = t.position;
                 m_zombies.Add(zombie);
-                
+
+                AudioManager.Instance.playClip(AudioManager.AppAudioClip.ZombieSpawned);
             }
 
         }

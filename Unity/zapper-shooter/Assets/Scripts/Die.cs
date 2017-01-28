@@ -7,8 +7,9 @@ public class Die : MonoBehaviour {
     [SerializeField]
     GameObject m_diePrefab;
 
-	public void killMe() {
+	public void killMe(Transform location) {
         GameObject zombie = Instantiate(m_diePrefab) as GameObject;
+        zombie.transform.position = location.position;
         //add other sounds when parts collide to the floor
         AudioManager.Instance.playClip(AudioManager.AppAudioClip.DieZombie);
 

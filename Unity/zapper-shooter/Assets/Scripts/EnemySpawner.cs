@@ -59,6 +59,8 @@ public class EnemySpawner : MonoBehaviour {
             Debug.Log("no vacancy for zombies. maybe next time?");
         }
         else {
+            unoccupied.Shuffle();
+
             int index = Mathf.RoundToInt(Random.Range(0f, unoccupied.Count - 1));
             if (index < unoccupied.Count) {
                 Transform t = unoccupied[index];
@@ -81,8 +83,7 @@ public class EnemySpawner : MonoBehaviour {
             Debug.LogError("Failed to find Zombie from EnemySpawner list! Bug?!");
             Debug.Assert(false);
         }
-        //Destroy(zombie);
-        zombie.GetComponent<Die>().killMe();
+        zombie.GetComponent<Die>().killMe(zombie.transform);
     }
 
     private IEnumerator createAndWait(float preDelay, float waitDelay) {

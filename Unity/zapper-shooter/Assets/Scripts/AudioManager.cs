@@ -18,7 +18,7 @@ public class AudioManager : MonoBehaviour
         m_FxClips.Add("Audio/FX/61570__intimidated__what");
         m_FxClips.Add("Audio/FX/31255__erh__door-1");
         m_FxClips.Add("Audio/FX/125919__klankbeeld__horror-what-are-you-doing-here-cathedral");
-        m_FxClips.Add("Audio/FX/221688__nigelnix__growling-zombie");
+        //m_FxClips.Add("Audio/FX/221688__nigelnix__growling-zombie");
         m_FxClips.Add("Audio/FX/333832__nick121087__demonic-woman-scream");
         m_FxClips.Add("Audio/FX/135419__mlsprovideos__moan4-echo");
         m_FxClips.Add("Audio/FX/232145__raspberrytickle__demon-grumble-whisper");

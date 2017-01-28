@@ -14,7 +14,7 @@ public class FxPlayer : MonoBehaviour {
     // Update is called once per frame
     void Update () {
 	    if (m_playItAgain) {
-            StartCoroutine(playAndWait(0f, 5f));
+            StartCoroutine(playAndWait(5f, 15f));
         }
 	}
 

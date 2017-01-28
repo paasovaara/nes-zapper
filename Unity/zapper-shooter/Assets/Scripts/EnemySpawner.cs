@@ -31,9 +31,18 @@ public class EnemySpawner : MonoBehaviour {
     }
 
     bool canSpawnHere (Transform point) {
-        //Debug code. TODO loop all monsters and check that their location is over threshold from point
+        // Make sure we don't spawn two monsters to same spawn position
         //TODO make sure we don't spawn enemies when we can see them.
-        return m_zombies.Count < 1;
+        Vector3 pos = point.position;
+        foreach (GameObject zombie in m_zombies) {
+            Vector3 zombiePos = zombie.transform.position;
+            float distance = (zombiePos - pos).magnitude;
+            if ( distance < 0.1) {
+                Debug.Log("Cannot spawn zombie to " + pos + " since nearest zombie distance is " + distance);
+                return false;
+            }            
+        }
+        return true;
     }
     
     void createRandomZombie() {

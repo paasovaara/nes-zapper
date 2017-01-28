@@ -9,6 +9,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     /*
      * TODO inherit from same base class with ZapperController, if possible
      * */
+    private const int TARGET_LAYER_MASK = 1 << 8;
 
     private int m_planeFrameCounter = 0;
     private ArduinoListener m_arduino;
@@ -18,6 +19,10 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     Camera m_mainCamera;
     [SerializeField]
     Camera m_zapperCamera;
+    [SerializeField]
+    Transform m_flashlightDirection;
+    [SerializeField]
+    float m_flashlightHitRadius = 0.5f; //this should at max be the lens radius. Can be also smaller to make hitting harder
 
     [SerializeField]
     private EnemySpawner m_spawner;
@@ -106,7 +111,6 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                 m_planeFrameCounter = 0;
 
                 killTarget();
-                Debug.Log("HIT!");
             }
             else if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.IDLE;
@@ -168,12 +172,44 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     }
 
     private void killTarget() {
-        Debug.Log("Dead zombie is the best zombie!");
         //TODO somehow figure out which zombie got hit!?
         List<GameObject> zombies = m_spawner.getZombies();
-        
-        m_spawner.KillZombie(zombies[0]);//DEBUG CODE
+        GameObject toDie = null;
+        foreach(GameObject zombie in zombies) {
+            if (amIHit(zombie)) {
+                Debug.Log("Dead zombie is the best zombie! DIE!");
+
+                Debug.Assert(toDie == null, "We hit two zombies at the same round..");
+                toDie = zombie;
+            }
+        }
+        if (toDie != null) {
+            m_spawner.KillZombie(toDie);
+        }
     }
+
+    private bool amIHit(GameObject zombie) {
+        bool hit = false;
+        RaycastHit raycastHit;
+
+        Vector3 origin = m_flashlightDirection.transform.position;
+        float distanceToObstacle = 0;
+        float maxDistance = 10f;
+        
+        // Cast a sphere wrapping character controller forward from camera
+        // to see if it is about to hit anything.
+        if (Physics.SphereCast(origin, m_flashlightHitRadius, m_flashlightDirection.forward, out raycastHit, maxDistance, TARGET_LAYER_MASK)) {
+            distanceToObstacle = raycastHit.distance;
+            Debug.Log("Raycast is a hit to zombie at distance: " + distanceToObstacle);
+            hit = true;
+        }
+        else {
+            Debug.Log("Raycast Did not hit zombie");
+        }
+
+        return hit;
+    }
+
 
     private bool determineHit(List<ArduinoMessage> msgs) {
         if (DEBUG_KILLING)
@@ -182,7 +218,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         if (msgs.Count == 0)
             return false;
         SignalProcState state = SignalProcState.INIT;
-        int startValue = 0;
+        //int startValue = 0;
         foreach (ArduinoMessage msg in msgs) {
 
         }

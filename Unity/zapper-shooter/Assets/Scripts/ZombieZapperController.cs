@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
 public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
+    private const bool DEBUG_KILLING = true;
     /*
      * TODO inherit from same base class with ZapperController, if possible
      * */
@@ -99,7 +100,15 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         }
         else if (m_state == DisplayState.WAIT_FOR_RESULTS) {
             //TODO refactor to separate function
-            if (m_planeFrameCounter > getFrameCountForState(m_state)) {
+            bool hit = determineHit(m_latestBurst);
+            if (hit) {
+                m_state = DisplayState.IDLE;
+                m_planeFrameCounter = 0;
+
+                killTarget();
+                Debug.Log("HIT!");
+            }
+            else if (m_planeFrameCounter > getFrameCountForState(m_state)) {
                 m_state = DisplayState.IDLE;
                 m_planeFrameCounter = 0;
 
@@ -107,6 +116,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             }
             m_planeFrameCounter++;
 
+            
         }
         else if (m_state == DisplayState.IDLE) {
             m_planeFrameCounter = 0;
@@ -145,9 +155,6 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                 }
                 else {
                     m_latestBurst.Add(msg);
-                    if (determineHit(m_latestBurst)) {
-                        killTarget();
-                    }
                 }
             }
         }
@@ -162,7 +169,6 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
     private void killTarget() {
         Debug.Log("Dead zombie is the best zombie!");
-        //AudioManager.
         //TODO somehow figure out which zombie got hit!?
         List<GameObject> zombies = m_spawner.getZombies();
         
@@ -170,6 +176,9 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     }
 
     private bool determineHit(List<ArduinoMessage> msgs) {
+        if (DEBUG_KILLING)
+            return true;
+
         if (msgs.Count == 0)
             return false;
         SignalProcState state = SignalProcState.INIT;

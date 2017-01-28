@@ -71,7 +71,8 @@ public class EnemySpawner : MonoBehaviour {
             Debug.LogError("Failed to find Zombie from EnemySpawner list! Bug?!");
             Debug.Assert(false);
         }
-        Destroy(zombie);
+        //Destroy(zombie);
+        zombie.GetComponent<Die>().killMe();
     }
 
     private IEnumerator createAndWait(float preDelay, float waitDelay) {

@@ -168,42 +168,46 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     }
 
     private void killTarget() {
-        //TODO somehow figure out which zombie got hit!?
-        List<GameObject> zombies = m_spawner.getZombies();
-        GameObject toDie = null;
-        foreach(GameObject zombie in zombies) {
-            if (amIHit(zombie)) {
-                Debug.Log("Dead zombie is the best zombie! DIE!");
-
-                Debug.Assert(toDie == null, "We hit two zombies at the same round..");
-                toDie = zombie;
-            }
-        }
+        GameObject toDie = whichGotHit(m_spawner.getZombies());
         if (toDie != null) {
+            Debug.Log("Dead zombie is the best zombie! DIE!");
             m_spawner.KillZombie(toDie);
         }
     }
 
-    private bool amIHit(GameObject zombie) {
-        bool hit = false;
+    private GameObject whichGotHit(List<GameObject> zombies) {
+        //use Raycast to find out which zombie (if any) got hit.
+        GameObject toDie = null;
         RaycastHit raycastHit;
 
         Vector3 origin = m_flashlightDirection.transform.position;
-        float distanceToObstacle = 0;
         float maxDistance = 10f;
         
-        // Cast a sphere wrapping character controller forward from camera
-        // to see if it is about to hit anything.
         if (Physics.SphereCast(origin, m_flashlightHitRadius, m_flashlightDirection.forward, out raycastHit, maxDistance, TARGET_LAYER_MASK)) {
-            distanceToObstacle = raycastHit.distance;
+            float distanceToObstacle = raycastHit.distance;
+            GameObject raycastObject = raycastHit.collider.gameObject;
+            Transform raycastObjParentTransform = raycastObject.transform.parent;
+
             Debug.Log("Raycast is a hit to zombie at distance: " + distanceToObstacle);
-            hit = true;
+            foreach (GameObject zombie in zombies) {
+                bool gotHit = false;
+                gotHit = (raycastObject == zombie);
+                //check also parent, since we haven't yet decided where we have the colliders, parent or the parts.
+                //TODO remove useless code later
+                if (raycastObjParentTransform != null) {
+                    gotHit |= (raycastObjParentTransform.gameObject == zombie);
+                }
+                if (gotHit) {
+                    Debug.Assert(toDie == null, "We hit two zombies at the same round, impossible..");
+                    toDie = zombie;    
+                }
+            }
         }
         else {
             Debug.Log("Raycast Did not hit any zombies");
         }
 
-        return hit;
+        return toDie;
     }
 
 

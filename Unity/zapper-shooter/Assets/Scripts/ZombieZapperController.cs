@@ -38,9 +38,9 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     private DisplayState m_state;
 
     private enum SignalProcState {
-        INIT,
-        NOTHING_FOUND,
-        BLANK_FOUND,
+        LOOKING_BLANK,
+        LOOKING_HIGH,
+        LOOKING_INIT,
         HIT_FOUND
     }
 
@@ -167,6 +167,29 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         handleState();
     }
 
+    void FixedUpdate() {
+        if (m_state != DisplayState.IDLE) {
+            return;
+        }
+        float speed = 5.0f;
+
+        List<GameObject> zombies = m_spawner.getZombies();
+        GameObject zombieInSpotlight = whichGotHit(zombies);
+        foreach(GameObject zombie in zombies) {
+            Rigidbody rb = zombie.GetComponent<Rigidbody>();
+            if (zombie == zombieInSpotlight) {
+                rb.velocity *= 0f;
+            }
+            else {
+                Vector3 towardsFlashligh = m_flashlightDirection.position - rb.transform.position;
+                Vector3 direction = Vector3.Scale(new Vector3(1f, 0f, 1f), towardsFlashligh);
+                rb.velocity = speed * Time.deltaTime * direction.normalized;
+            }
+            //Debug.Log(rb.velocity + " direction : " + direction.normalized);
+        }
+    }
+    
+
     private void killTarget() {
         GameObject toDie = whichGotHit(m_spawner.getZombies());
         if (toDie != null) {
@@ -188,7 +211,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             GameObject raycastObject = raycastHit.collider.gameObject;
             Transform raycastObjParentTransform = raycastObject.transform.parent;
 
-            Debug.Log("Raycast is a hit to zombie at distance: " + distanceToObstacle);
+           ///Debug.Log("Raycast is a hit to zombie at distance: " + distanceToObstacle);
             foreach (GameObject zombie in zombies) {
                 bool gotHit = false;
                 gotHit = (raycastObject == zombie);
@@ -215,16 +238,36 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         if (DEBUG_KILLING)
             return true;
 
-        if (msgs.Count == 0)
-            return false;
-        SignalProcState state = SignalProcState.INIT;
-        //int startValue = 0;
-        foreach (ArduinoMessage msg in msgs) {
-
-        }
         
+        if (msgs.Count < 1)
+            return false;
+
+        float displayFps = Application.targetFrameRate;
+        float zapperFps = Mathf.RoundToInt(1f / 8f);
+        int samplesPerFrame = Mathf.RoundToInt(zapperFps / displayFps);
+        int maxStateLength = 2 * samplesPerFrame;//let's duplicate just in case
+        
+        SignalProcState state = SignalProcState.LOOKING_BLANK;
+        int prev = -1;
+        int val = -1;
+        /*foreach (ArduinoMessage msg in msgs) {
+            if (int.TryParse(msg.Message, out val)) {
+                if (prev < 0) {
+                    //first sample so just init    
+                }    
+                else {
+                    int diff = val - prev;
+
+                    if ()
+
+                }
+                prev = val;
+            }
+        }*/
+
         return state == SignalProcState.HIT_FOUND;
     }
+    
 
     private string printMessages(List<ArduinoMessage> msgs) {
         StringBuilder builder = new StringBuilder();

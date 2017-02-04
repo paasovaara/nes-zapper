@@ -2,10 +2,11 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
-    private const bool DEBUG_KILLING = true;
+    private const bool DEBUG_KILLING = false;
     /*
      * TODO inherit from same base class with ZapperController, if possible
      * */
@@ -40,8 +41,8 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
     private enum SignalProcState {
         LOOKING_BLANK,
         LOOKING_HIGH,
-        LOOKING_INIT,
-        HIT_FOUND
+        MISSED,
+        HIT
     }
 
     private int getFrameCountForState(DisplayState state) {
@@ -149,9 +150,19 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
                     m_latestBurst.Clear();
                 }
                 else if (msg.Message.Contains("END")) {
-                    string messages = printMessages(m_latestBurst);
-                    string diff = printDiff(m_latestBurst);
-                    writeToFile(messages + "\n" + diff);
+                    List<int> values = messageQueueValues(m_latestBurst);
+                    writeToFile(printValues(values));
+
+                    List<int> normalized = removeAverage(values);
+                    writeToFile(printValues(normalized));
+                    
+                    List<int> normalizedUsingStart = removeAverageOfStartSamples(values, 4);
+                    writeToFile(printValues(normalizedUsingStart));
+
+                    writeToFile("");
+                    //string messages = printMessages(m_latestBurst);
+                    //string diff = printDiff(m_latestBurst);
+                    //writeToFile(messages + "\n" + diff);
                 }
                 else {
                     m_latestBurst.Add(msg);
@@ -167,6 +178,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         handleState();
     }
 
+    /*
     void FixedUpdate() {
         if (m_state != DisplayState.IDLE) {
             return;
@@ -187,7 +199,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             }
             //Debug.Log(rb.velocity + " direction : " + direction.normalized);
         }
-    }
+    }*/
     
 
     private void killTarget() {
@@ -227,7 +239,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             }
         }
         else {
-            Debug.Log("Raycast Did not hit any zombies");
+            //Debug.Log("Raycast Did not hit any zombies");
         }
 
         return toDie;
@@ -241,48 +253,86 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
         
         if (msgs.Count < 1)
             return false;
-
-        float displayFps = Application.targetFrameRate;
-        float zapperFps = Mathf.RoundToInt(1f / 8f);
-        int samplesPerFrame = Mathf.RoundToInt(zapperFps / displayFps);
-        int maxStateLength = 2 * samplesPerFrame;//let's duplicate just in case
         
+        float displayFps = 60f;
+        float zapperFps = 1.0f / 8.0f;
+        int samplesPerFrame = Mathf.RoundToInt(displayFps / zapperFps);
+        int maxStateLength = 2 * samplesPerFrame;//let's duplicate just in case
+        //Debug.LogFormat("displayFPS: {0}, zapperFPS: {1}, samplesPerFrame: {3}", displayFps, zapperFps, samplesPerFrame); 
+
+        List<int> values = messageQueueValues(msgs);
+        //delay for the displays can easily be 60ms, but let's go with 30ms just to be sure => about 4 samples
+        List<int> normalized = removeAverageOfStartSamples(values, 4);
+
+        //These thresholds are very much affected by the display contrast and in-game-flashlight intensity.
+        //TODO add calibration mode where we define the flashlight intensity and these thresholds.
+        int blankThreshold = -25;
+        int highThreshold = 50;
+        int sampleCounter = 0;
         SignalProcState state = SignalProcState.LOOKING_BLANK;
-        int prev = -1;
-        int val = -1;
-        /*foreach (ArduinoMessage msg in msgs) {
-            if (int.TryParse(msg.Message, out val)) {
-                if (prev < 0) {
-                    //first sample so just init    
-                }    
-                else {
-                    int diff = val - prev;
-
-                    if ()
-
+        foreach (int sample in normalized) {
+            if (state == SignalProcState.LOOKING_BLANK) {
+                if (sample <= blankThreshold) {
+                    Debug.LogFormat("Blank found {0}, let's look for hit", sample);
+                    state = SignalProcState.LOOKING_HIGH;             
                 }
-                prev = val;
             }
-        }*/
+            else if (state == SignalProcState.LOOKING_HIGH) {
+                if (sampleCounter > maxStateLength) {
+                    state = SignalProcState.MISSED;
+                    Debug.LogFormat("Waited for high value for {0} samples, considering this as a miss.", maxStateLength);
+                    break;
+                }
+                if (sample >= highThreshold) {
+                    Debug.LogFormat("Found HIT after {0} frames, value was {1}", sampleCounter, sample);
 
-        return state == SignalProcState.HIT_FOUND;
+                    state = SignalProcState.HIT;
+                    break;
+                }
+                sampleCounter++;
+
+            }
+        }
+        return state == SignalProcState.HIT;
+    }
+
+    private List<int> messageQueueValues(List<ArduinoMessage> msgs) {
+        List<int> values = new List<int>();
+        int val = 0;
+
+        foreach (ArduinoMessage msg in msgs) {
+            if (int.TryParse(msg.Message, out val)) {
+                values.Add(val);
+            }
+            else {
+                Debug.Assert(false, "Failed to parse message value: " + msg);
+            }
+        }
+        return values;
     }
     
+    private List<int> removeAverage(List<int> values) {
+        int average = Mathf.RoundToInt((float)values.Average());
+        return values.Select(n => n - average).ToList();
+    }
 
-    private string printMessages(List<ArduinoMessage> msgs) {
+    private List<int> removeAverageOfStartSamples(List<int> values, int sampleCount) {
+        int average = Mathf.RoundToInt((float)values.GetRange(0, sampleCount).Average());
+        Debug.Log("average of " + sampleCount + " first samples is " + average);
+        return values.Select(n => n - average).ToList();
+    }
+
+    private string printValues(List<int> values) {
         StringBuilder builder = new StringBuilder();
-        builder.Append("Buffer:\t[");
-        foreach (ArduinoMessage msg in msgs) {
-            builder.AppendFormat("{0},\t", msg);
+        foreach (int val in values) {
+            builder.AppendFormat("{0},\t", val);
         }
-        builder.Append("]");
         return builder.ToString();
 
     }
-
+    /*
     private string printDiff(List<ArduinoMessage> msgs) {
         StringBuilder builder = new StringBuilder();
-        builder.Append("Diff:\t[");
         int prev = -1;
         int val = -1;
 
@@ -298,14 +348,11 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
             }
 
         }
-        builder.Append("]");
         return builder.ToString();
-    }
+    }*/
 
 
     public void messageReceived(ArduinoMessage msg) {
-        //if (m_state != DisplayState.IDLE)
-        //    Debug.Log(string.Format("[Zapper at {0}]: {1}", m_state, msg));
     }
 
     private void writeToFile(string msg) {

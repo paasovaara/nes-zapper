@@ -1,14 +1,21 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.IO.Ports;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 
 /**
  * For System.IO.Ports namespace you need to enable .Net 2.0 instead of .Net 2.0 subset (which is default).
  * 
  * You can find this setting from "Edit > project settings > player"
  * */
+
+public enum ArduinoStatus {
+    UNINITIALIZED,
+    INITIALIZED_AND_RUNNING,
+    INIT_FAILED
+}
 
 public enum ComPort {
     COM3,
@@ -20,10 +27,12 @@ public enum ComPort {
  */
 public interface IArduinoMessageHandler {
     void messageReceived(ArduinoMessage msg);
+    void statusChanged(ArduinoStatus newStatus);
 }
 
 public class ArduinoListener : MonoBehaviour {
     SerialPort m_serial = null;
+    ArduinoStatus m_status = ArduinoStatus.UNINITIALIZED;
 
     [SerializeField]
     private ComPort m_comPort = ComPort.COM3;
@@ -41,38 +50,55 @@ public class ArduinoListener : MonoBehaviour {
         return "unknown";
     }
 
+    ArduinoStatus Status {
+        get { return m_status; }
+    }
+
     public void addMessageHandler(IArduinoMessageHandler handler) {
         //TODO add possibility to remove a handler
         m_messageHandlers.Add(handler);
     }
 
 	// Use this for initialization
-	void Start () {
+	void Initialize () {
         string comPort = toString(m_comPort);
-        m_serial = new SerialPort(comPort, 115200);
 
-        //m_serial.NewLine //set new line char
-        m_serial.Open();
-        if (m_serial.IsOpen) {
-            Debug.Log("Serial port opened " + comPort);
+        //m_serial.NewLine //set new line char        
+        try {
+            m_serial = new SerialPort(comPort, 115200);
+            m_serial.Open();
+            if (m_serial.IsOpen) {
+                Debug.Log("Serial port opened " + comPort);
+                m_status = ArduinoStatus.INITIALIZED_AND_RUNNING;
 
-            Thread t = new Thread(new ThreadStart(serialLoop));
-            t.Start();
+                Thread t = new Thread(new ThreadStart(serialLoop));
+                t.Start();
+            }
+            else {
+                m_status = ArduinoStatus.INIT_FAILED;
+            }
         }
-        else {
-            Debug.LogError("Failed to open serial port " + comPort);
+        catch (IOException ioe) {
+            m_status = ArduinoStatus.INIT_FAILED;
+            Debug.LogError(ioe.StackTrace);
         }
 
-	}
-
-    /*
-    public void Update() {
-        //debug: clear the queue always on main thread. should never deadlock or cause anything else either
-        List<ArduinoMessage> msgs = getAndClearQueue();
-        foreach(ArduinoMessage msg in msgs) {
-            Debug.Log("MESSAGE: " + msg.Message);
+        if (m_status != ArduinoStatus.INITIALIZED_AND_RUNNING) {
+            Debug.LogError("Failed to initialize serial port " + comPort);
         }
-    }*/
+        broadcastStatus(m_status);
+    }
+
+    void Update() {
+        //Use update loop for init instead of Start(), so we don't have a race
+        //condition if some messageHandlers register themselves in update.
+        //Of course clients can always ask for the status also themselves.
+        if (m_status == ArduinoStatus.UNINITIALIZED) {
+            Initialize();
+        }
+    }
+
+
 
     public void OnDestroy() {
         //clean all resources
@@ -125,6 +151,13 @@ public class ArduinoListener : MonoBehaviour {
         foreach(IArduinoMessageHandler handler in m_messageHandlers) {
             if (handler != null)
                 handler.messageReceived(msg);
+        }
+    }
+
+    private void broadcastStatus(ArduinoStatus status) {
+        foreach (IArduinoMessageHandler handler in m_messageHandlers) {
+            if (handler != null)
+                handler.statusChanged(status);
         }
     }
 }

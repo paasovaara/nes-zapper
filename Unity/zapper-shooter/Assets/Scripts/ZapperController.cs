@@ -196,6 +196,9 @@ public class ZapperController : MonoBehaviour, IArduinoMessageHandler {
         //    Debug.Log(string.Format("[Zapper at {0}]: {1}", m_state, msg));
     }
 
+    public void statusChanged(ArduinoStatus newStatus) {
+    }
+
     private void writeToFile(string msg) {
         using (System.IO.StreamWriter file = 
             new System.IO.StreamWriter(@"./zapper.txt", true))

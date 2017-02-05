@@ -6,11 +6,12 @@ using System.Linq;
 
 public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
-    private const bool DEBUG_KILLING = false;
     /*
      * TODO inherit from same base class with ZapperController, if possible
      * */
     private const int TARGET_LAYER_MASK = 1 << 8;
+
+    private bool m_zapperConnectionOk = false;
 
     private int m_planeFrameCounter = 0;
     private ArduinoListener m_arduino;
@@ -247,10 +248,12 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
 
     private bool determineHitFromZapperData(List<ArduinoMessage> msgs) {
-        if (DEBUG_KILLING)
+        if (!m_zapperConnectionOk) {
+            //we are possibly debugging without the gun
             return true;
+        }
 
-        
+
         if (msgs.Count < 1)
             return false;
         
@@ -353,6 +356,16 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
 
     public void messageReceived(ArduinoMessage msg) {
+    }
+
+    public void statusChanged(ArduinoStatus newStatus) {
+        Debug.Log("Arduino status changed to " + newStatus);
+        if (newStatus == ArduinoStatus.INITIALIZED_AND_RUNNING) {
+            m_zapperConnectionOk = true;
+        }
+        else if (newStatus == ArduinoStatus.INIT_FAILED) {
+            m_zapperConnectionOk = false;
+        }
     }
 
     private void writeToFile(string msg) {

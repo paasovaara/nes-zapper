@@ -79,11 +79,13 @@ public class EnemySpawner : MonoBehaviour {
     }
 
     public void KillZombie(GameObject zombie) {
-        if (!m_zombies.Remove(zombie)) {
-            Debug.LogError("Failed to find Zombie from EnemySpawner list! Bug?!");
-            Debug.Assert(false);
+        bool died = zombie.GetComponent<Die>().shotHit();
+        if (died) {
+            if (!m_zombies.Remove(zombie)) {
+                Debug.LogError("Failed to find Zombie from EnemySpawner list! Bug?!");
+                Debug.Assert(false);
+            }
         }
-        zombie.GetComponent<Die>().killMe(zombie.transform);
     }
 
     private IEnumerator createAndWait(float preDelay, float waitDelay) {

@@ -321,7 +321,7 @@ public class ZombieZapperController : MonoBehaviour, IArduinoMessageHandler {
 
     private List<int> removeAverageOfStartSamples(List<int> values, int sampleCount) {
         int average = Mathf.RoundToInt((float)values.GetRange(0, sampleCount).Average());
-        Debug.Log("average of " + sampleCount + " first samples is " + average);
+        //Debug.Log("average of " + sampleCount + " first samples is " + average);
         return values.Select(n => n - average).ToList();
     }
 
